@@ -32,5 +32,9 @@
     "homebridge": "^1.0.4",
     "rimraf": "^3.0.2",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "queue": "^4.5.0",
+    "telnet-client": "^0.16.4"
   }
 }
