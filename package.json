@@ -17,7 +17,7 @@
     "homebridge-plugin"
   ],
   "author": "Evgeniy Ostapenko <ostapenko@logx.ru>",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "LICENSE",
     "lib",
