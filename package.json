@@ -1,0 +1,36 @@
+{
+  "name": "homebridge-breezart-fan",
+  "version": "0.0.1",
+  "description": "An accessory breezart fan plugin for homebridge",
+  "main": "dist/accessory.js",
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "homebridge": ">=1.0.0"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "author": "Evgeniy Ostapenko <ostapenko@logx.ru>",
+  "license": "ISC",
+  "files": [
+    "LICENSE",
+    "lib",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EvgenOst/homebridge-breezart-fan.git"
+  },
+  "devDependencies": {
+    "@types/node": "^13.13.4",
+    "homebridge": "^1.0.4",
+    "rimraf": "^3.0.2",
+    "typescript": "^3.8.3"
+  }
+}
