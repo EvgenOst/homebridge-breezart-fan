@@ -14,7 +14,7 @@ import {
 //@ts-ignore
 import BreezartClient from '../lib/breezart-client';
 
-const PLUGIN_NAME = 'homebridge-fan-switch';
+const PLUGIN_NAME = 'homebridge-breezart-fan';
 const ACCESSORY_NAME = 'FanSwitch';
 
 let hap: HAP;

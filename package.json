@@ -1,6 +1,6 @@
 {
   "name": "homebridge-breezart-fan",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "An accessory breezart fan plugin for homebridge",
   "main": "dist/accessory.js",
   "scripts": {
