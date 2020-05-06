@@ -36,6 +36,8 @@ class FanSwitch implements AccessoryPlugin {
   private readonly fanMaxSpeed: number;
   private readonly fanSpeedUnitsCount: number;
 
+  private connectionReady: boolean = false;
+
   private readonly fanService: Service;
   private readonly informationService: Service;
   private readonly breezartClient: BreezartClient;
@@ -50,10 +52,14 @@ class FanSwitch implements AccessoryPlugin {
     this.fanMinSpeed = config.minSpeed;
     this.fanMaxSpeed = config.maxSpeed;
     this.fanSpeedUnitsCount = config.maxSpeed - config.minSpeed;
-
     this.breezartClient = new BreezartClient({
       ip: this.fanIP,
       password: this.fanPassword,
+    });
+
+    this.breezartClient.connect();
+    this.breezartClient.getProperties(() => {
+      this.connectionReady = true;
     });
 
     this.fanService = new hap.Service.Fan(this.name);
@@ -76,7 +82,11 @@ class FanSwitch implements AccessoryPlugin {
   }
 
   getPowerState(callback: CharacteristicGetCallback) {
-    this.breezartClient.connect();
+    if (!this.connectionReady) {
+      // Returns false while connection is not ready
+      callback(undefined, false);
+      return;
+    }
     this.breezartClient.getStatus((error: Error) => {
       if (error) {
         callback(error);
@@ -88,7 +98,6 @@ class FanSwitch implements AccessoryPlugin {
         'Current state of the fan switch was returned: ' + fanState
       );
       callback(undefined, powerOn);
-      this.breezartClient.disconnect();
     });
   }
 
@@ -96,7 +105,10 @@ class FanSwitch implements AccessoryPlugin {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback
   ) {
-    this.breezartClient.connect();
+    if (!this.connectionReady) {
+      callback();
+      return;
+    }
     this.breezartClient.setPower(value, (error: Error) => {
       if (error) {
         callback(error);
@@ -104,12 +116,15 @@ class FanSwitch implements AccessoryPlugin {
       }
       this.log.info('Set state of the fas switch: ' + value);
       callback();
-      this.breezartClient.disconnect();
     });
   }
 
   getRotationSpeed(callback: CharacteristicGetCallback) {
-    this.breezartClient.connect();
+    if (!this.connectionReady) {
+      // Returns 0 while connection is not ready
+      callback(undefined, 0);
+      return;
+    }
     this.breezartClient.getStatus((error: Error) => {
       if (error) {
         callback(error);
@@ -118,7 +133,6 @@ class FanSwitch implements AccessoryPlugin {
       const speed = this.mapSpeedUnitsToPercent(this.breezartClient.Speed);
       this.log.info('Current state of the fan switch was returned: ' + speed);
       callback(undefined, speed);
-      this.breezartClient.disconnect();
     });
   }
 
@@ -126,8 +140,11 @@ class FanSwitch implements AccessoryPlugin {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback
   ) {
+    if (!this.connectionReady) {
+      callback();
+      return;
+    }
     const speedValue = this.mapPercentToSpeedUnits(value as number);
-    this.breezartClient.connect();
     this.breezartClient.setRotationSpeed(speedValue, (error: Error) => {
       if (error) {
         callback(error);
@@ -135,7 +152,6 @@ class FanSwitch implements AccessoryPlugin {
       }
       this.log.info('Rotate speed was set to: ' + speedValue);
       callback();
-      this.breezartClient.disconnect();
     });
   }
 
