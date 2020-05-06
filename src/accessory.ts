@@ -32,10 +32,9 @@ class FanSwitch implements AccessoryPlugin {
   private readonly name: string;
   private readonly fanIP: string;
   private readonly fanPassword: string;
-  private fakeFanSpeed: number;
-  // private switchOn = false;
-
-  private connectionReady: boolean;
+  private readonly fanMinSpeed: number;
+  private readonly fanMaxSpeed: number;
+  private readonly fanSpeedUnitsCount: number;
 
   private readonly fanService: Service;
   private readonly informationService: Service;
@@ -48,17 +47,13 @@ class FanSwitch implements AccessoryPlugin {
     this.fanIP = config.ip;
     this.fanPassword = config.password;
 
-    this.fakeFanSpeed = 50;
+    this.fanMinSpeed = config.minSpeed;
+    this.fanMaxSpeed = config.maxSpeed;
+    this.fanSpeedUnitsCount = config.maxSpeed - config.minSpeed;
 
-    this.connectionReady = false;
     this.breezartClient = new BreezartClient({
       ip: this.fanIP,
       password: this.fanPassword,
-    });
-    this.breezartClient.connect();
-    this.breezartClient.getProperties(() => {
-      this.connectionReady = true;
-      // this.breezartClient.disconnect();
     });
 
     this.fanService = new hap.Service.Fan(this.name);
@@ -81,11 +76,7 @@ class FanSwitch implements AccessoryPlugin {
   }
 
   getPowerState(callback: CharacteristicGetCallback) {
-    if (!this.connectionReady) {
-      // Returns false wile connaction is not ready
-      callback(undefined, false);
-      return;
-    }
+    this.breezartClient.connect();
     this.breezartClient.getStatus((error: Error) => {
       if (error) {
         callback(error);
@@ -97,6 +88,7 @@ class FanSwitch implements AccessoryPlugin {
         'Current state of the fan switch was returned: ' + fanState
       );
       callback(undefined, powerOn);
+      this.breezartClient.disconnect();
     });
   }
 
@@ -104,10 +96,7 @@ class FanSwitch implements AccessoryPlugin {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback
   ) {
-    if (!this.connectionReady) {
-      callback();
-      return;
-    }
+    this.breezartClient.connect();
     this.breezartClient.setPower(value, (error: Error) => {
       if (error) {
         callback(error);
@@ -115,24 +104,53 @@ class FanSwitch implements AccessoryPlugin {
       }
       this.log.info('Set state of the fas switch: ' + value);
       callback();
+      this.breezartClient.disconnect();
     });
   }
 
   getRotationSpeed(callback: CharacteristicGetCallback) {
-    this.log.info(
-      'Current state of the rotation speed was returned: ' + this.fakeFanSpeed
-    );
-    callback(undefined, this.fakeFanSpeed);
+    this.breezartClient.connect();
+    this.breezartClient.getStatus((error: Error) => {
+      if (error) {
+        callback(error);
+        return;
+      }
+      const speed = this.mapSpeedUnitsToPercent(this.breezartClient.Speed);
+      this.log.info('Current state of the fan switch was returned: ' + speed);
+      callback(undefined, speed);
+      this.breezartClient.disconnect();
+    });
   }
 
   setRotationSpeed(
     value: CharacteristicValue,
     callback: CharacteristicSetCallback
   ) {
-    this.fakeFanSpeed = value as number;
-    this.log.info('Switch state was set to: ' + this.fakeFanSpeed);
-    callback();
+    const speedValue = this.mapPercentToSpeedUnits(value as number);
+    this.breezartClient.connect();
+    this.breezartClient.setRotationSpeed(speedValue, (error: Error) => {
+      if (error) {
+        callback(error);
+        return;
+      }
+      this.log.info('Rotate speed was set to: ' + speedValue);
+      callback();
+      this.breezartClient.disconnect();
+    });
   }
+
+  mapSpeedUnitsToPercent(value: number): number {
+    const minValue = this.fanMinSpeed;
+    const unitsCount = this.fanSpeedUnitsCount;
+    return Math.ceil(((value - minValue) / unitsCount) * 100);
+  }
+
+  mapPercentToSpeedUnits(value: number): number {
+    const minValue = this.fanMinSpeed;
+    const unitsCount = this.fanSpeedUnitsCount;
+    return Math.ceil((unitsCount * value) / 100) + minValue;
+  }
+
   /*
    * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
    * Typical this only ever happens at the pairing process.

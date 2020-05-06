@@ -19,6 +19,22 @@
         "title": "Password",
         "type": "string",
         "required": true
+      },
+      "minSpeed": {
+        "title": "Min fan speed",
+        "type": "integer",
+				"default": 0,
+				"maximum": 9,
+				"minimum": 0,
+				"required": false
+      },
+      "maxSpeed": {
+        "title": "Max fan speed",
+        "type": "integer",
+				"default": 10,
+				"maximum": 10,
+				"minimum": 1,
+				"required": false
       }
     }
   }
